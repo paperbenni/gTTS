@@ -82,6 +82,16 @@ def validate_lang(ctx, param, lang):
     return lang
 
 
+def validate_cache(ctx, param, cache):
+    """Validation callback for the <cache> option.
+    Ensures <cache> either exists or the dir its in is writable
+    """
+    # Check if file exists, if ends with .sqlite, remove extension (!)
+    # Check if can write in dir (with other Click.File options?)
+    log.debug("cache cli: %s", cache)
+    return cache
+
+
 def print_languages(ctx, param, value):
     """Callback for <all> flag.
     Prints formatted sorted list of supported languages and exits
@@ -137,6 +147,15 @@ def set_debug(ctx, param, debug):
     callback=validate_lang,
     help="IETF language tag. Language to speak in. List documented tags with --all.")
 @click.option(
+    '-c',
+    '--cache',
+    metavar='<file>',
+    default=None,
+    show_default=True,
+    callback=validate_cache,
+    type=click.Path(exists=False, dir_okay=False),
+    help="Cache file")
+@click.option(
     '--nocheck',
     default=False,
     is_flag=True,
@@ -159,7 +178,7 @@ def set_debug(ctx, param, debug):
     callback=set_debug,
     help="Show debug information.")
 @click.version_option(version=__version__)
-def tts_cli(text, file, output, slow, lang, nocheck):
+def tts_cli(text, file, output, slow, lang, nocheck, cache):
     """ Read <text> to mp3 format using Google Translate's Text-to-Speech API
     (set <text> or --file <file> to - for standard input)
     """
@@ -189,7 +208,8 @@ def tts_cli(text, file, output, slow, lang, nocheck):
             text=text,
             lang=lang,
             slow=slow,
-            lang_check=not nocheck)
+            lang_check=not nocheck,
+            cache=cache)
         tts.write_to_fp(output)
     except (ValueError, AssertionError) as e:
         raise click.UsageError(str(e))

@@ -5,8 +5,9 @@ from gtts.lang import tts_langs
 
 from gtts_token import gtts_token
 from six.moves import urllib
-import urllib3
+import requests_cache
 import requests
+import urllib3
 import logging
 
 __all__ = ['gTTS', 'gTTSError']
@@ -83,12 +84,17 @@ class gTTS:
             "Chrome/47.0.2526.106 Safari/537.36"
     }
 
+    CACHE_BACKEND = 'sqlite'
+    CACHE_BACKEND_OPTIONS = {}
+    CACHE_EXPIRE_AFTER = None
+
     def __init__(
             self,
             text,
             lang='en',
             slow=False,
             lang_check=True,
+            cache=None,
             pre_processor_funcs=[
                 pre_processors.tone_marks,
                 pre_processors.end_of_line,
@@ -131,6 +137,9 @@ class gTTS:
             self.speed = Speed.SLOW
         else:
             self.speed = Speed.NORMAL
+
+        # Caching
+        self.cache = cache
 
         # Pre-processors and tokenizer
         self.pre_processor_funcs = pre_processor_funcs
@@ -183,6 +192,17 @@ class gTTS:
         log.debug("text_parts: %i", len(text_parts))
         assert text_parts, 'No text to send to TTS API'
 
+        # Caching
+        if self.cache is not None:
+            cached_count = 0
+            requests_cache.install_cache(
+                cache_name=self.cache,
+                backend=self.CACHE_BACKEND,
+                expire_after=self.CACHE_EXPIRE_AFTER,
+                backend_options=self.CACHE_BACKEND_OPTIONS,
+                ignored_parameters=['total', 'idx']
+            )
+
         for idx, part in enumerate(text_parts):
             try:
                 # Calculate token
@@ -217,6 +237,10 @@ class gTTS:
                 log.debug("url-%i: %s", idx, r.request.url)
                 log.debug("status-%i: %s", idx, r.status_code)
 
+                if self.cache is not None:
+                    log.debug("cached-%i: %s", idx, r.from_cache)
+                    cached_count += 1
+
                 r.raise_for_status()
             except requests.exceptions.HTTPError:
                 # Request successful, bad response
@@ -234,6 +258,9 @@ class gTTS:
                 raise TypeError(
                     "'fp' is not a file-like object or it does not take bytes: %s" %
                     str(e))
+
+        if self.cache is not None:
+            log.debug("Cached: %i/%i", cached_count, len(text_parts))
 
     def save(self, savefile):
         """Do the TTS API request and write result to file.

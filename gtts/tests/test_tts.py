@@ -4,61 +4,6 @@ import pytest
 from mock import Mock
 
 from gtts.tts import gTTS, gTTSError
-from gtts.lang import _fetch_langs, _extra_langs
-
-# Testing all languages takes some time.
-# Set TEST_LANGS envvar to choose languages to test.
-#  * 'fetch': Languages fetched from the Web
-#  * 'extra': Languagee set in Languages.EXTRA_LANGS
-#  * 'all': All of the above
-#  * <csv>: Languages tags list to test
-# Unset TEST_LANGS to test everything ('all')
-# See: langs_dict()
-
-
-"""Construct a dict of suites of languages to test.
-{ '<suite name>' : <list or dict of language tags> }
-
-ex.: { 'fetch' : {'en': 'English', 'fr': 'French'},
-       'extra' : {'en': 'English', 'fr': 'French'} }
-ex.: { 'environ' : ['en', 'fr'] }
-"""
-env = os.environ.get('TEST_LANGS')
-if not env or env == 'all':
-    langs = _fetch_langs()
-    langs.update(_extra_langs())
-elif env == 'fetch':
-    langs = _fetch_langs()
-elif env == 'extra':
-    langs = _extra_langs()
-else:
-    env_langs = {l: l for l in env.split(',') if l}
-    langs = env_langs
-
-
-@pytest.mark.parametrize('lang', langs.keys(), ids=list(langs.values()))
-def test_TTS(tmp_path, lang):
-    """Test all supported languages and file save"""
-
-    text = "This is a test"
-    """Create output .mp3 file successfully"""
-    for slow in (False, True):
-        filename = tmp_path / 'test_{}_.mp3'.format(lang)
-        # Create gTTS and save
-        tts = gTTS(text, lang, slow=slow)
-        tts.save(filename)
-
-        # Check if files created is > 2k
-        assert filename.stat().st_size > 2000
-
-
-def test_unsupported_language_check():
-    """Raise ValueError on unsupported language (with language check)"""
-    lang = 'xx'
-    text = "Lorem ipsum"
-    check = True
-    with pytest.raises(ValueError):
-        gTTS(text=text, lang=lang, lang_check=check)
 
 
 def test_empty_string():

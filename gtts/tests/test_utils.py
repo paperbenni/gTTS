@@ -6,6 +6,7 @@ delim = ' '
 Lmax = 10
 
 
+
 def test_ascii():
     _in = "Bacon ipsum dolor sit amet"
     _out = ["Bacon", "ipsum", "dolor sit", "amet"]

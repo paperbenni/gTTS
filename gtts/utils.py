@@ -64,6 +64,7 @@ def _len(text):
         int: the size of the string.
     """
     try:
+        
         # Python 2
         return len(unicode(text))
     except NameError:  # pragma: no cover

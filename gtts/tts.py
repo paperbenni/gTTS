@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from gtts.tokenizer import pre_processors, Tokenizer, tokenizer_cases
 from gtts.utils import _minimize, _len, _clean_tokens
-from gtts.lang import tts_langs
 
 from gtts_token import gtts_token
 from six.moves import urllib
@@ -113,18 +112,7 @@ class gTTS:
         assert text, 'No text to speak'
         self.text = text
 
-        # Language
-        if lang_check:
-            try:
-                langs = tts_langs()
-                if lang.lower() not in langs:
-                    raise ValueError("Language not supported: %s" % lang)
-            except RuntimeError as e:
-                log.debug(str(e), exc_info=True)
-                log.warning(str(e))
-
-        self.lang_check = lang_check
-        self.lang = lang.lower()
+        self.lang = 'en'
 
         # Read speed
         if slow:
@@ -277,7 +265,7 @@ class gTTSError(Exception):
         cause = "Unknown"
         if status == 403:
             cause = "Bad token or upstream API changes"
-        elif status == 404 and not tts.lang_check:
+        elif status == 404:
             cause = "Unsupported language '%s'" % self.tts.lang
         elif status >= 500:
             cause = "Uptream API error. Try again later."

@@ -3,6 +3,7 @@ import unittest
 import re
 from gtts.tokenizer.core import RegexBuilder, PreProcessorRegex, PreProcessorSub, Tokenizer
 
+
 # Tests based on classes usage examples
 # See class documentation for details
 
